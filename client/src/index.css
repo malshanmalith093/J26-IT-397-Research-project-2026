@@ -1,0 +1,130 @@
+:root {
+  --primary: #2D3E40;
+  --primary-light: #4A6366;
+  --accent: #27AE60;
+  --bg-sidebar: #EBF9F1;
+  --bg-main: #FFFFFF;
+  --text-main: #1A1A1A;
+  --text-muted: #666666;
+  --border-color: #E0E0E0;
+  --input-bg: #F8F9FA;
+
+  --font-heading: 'Outfit', sans-serif;
+  --font-body: 'Inter', sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  caret-color: transparent;
+  /* Prevent caret on non-input elements */
+  user-select: none;
+  /* Disable text selection globally */
+}
+
+*:focus {
+  outline: none;
+  /* Normalize focus outlines */
+}
+
+input,
+textarea,
+[contenteditable="true"],
+.quill-content,
+.selectable-text {
+  caret-color: auto;
+  /* Restore caret for actual inputs */
+  user-select: text;
+  /* Re-enable selection for inputs and content */
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-heading);
+  font-weight: 600;
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  padding: 14px 28px;
+  border-radius: 30px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-light);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(45, 62, 64, 0.2);
+}
+
+.input-group {
+  margin-bottom: 24px;
+  text-align: left;
+}
+
+.input-group label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: var(--text-muted);
+}
+
+.input-group input {
+  width: 100%;
+  background: var(--input-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 1rem;
+  color: var(--text-main);
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+.input-group input:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: white;
+  box-shadow: 0 0 0 4px rgba(39, 174, 96, 0.1);
+}
+
+/* Transitions */
+.fade-enter {
+  opacity: 0;
+}
+
+.fade-enter-active {
+  opacity: 1;
+  transition: opacity 300ms ease-in;
+}
+
+.fade-exit {
+  opacity: 1;
+}
+
+.fade-exit-active {
+  opacity: 0;
+  transition: opacity 300ms ease-in;
+}
