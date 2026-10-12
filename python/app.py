@@ -2,7 +2,8 @@ from flask import Flask, request, send_file, jsonify
 from flask_cors import CORS
 from Example.graph import create_graph
 from Example.new import get_data
-
+from OptimalPath.Data import get_student_data
+from OptimalPath.category import calculate_student_clusters
 from pymongo import MongoClient
 from bson import ObjectId
 
@@ -220,7 +221,56 @@ def example_data():
             "message": str(e)
         }), 500
 
+@app.route("/StudentData", methods=["GET"])
+def student_data():
 
+    try:
+
+        result = get_student_data()
+
+        print("\n FLASK STUDENT DATA ")
+        print("TYPE:", type(result))
+        print("RECORD COUNT:", len(result))
+
+        if len(result) > 0:
+            print("FIRST RECORD:")
+            print(result[0])
+
+
+        return jsonify(result)
+
+    except Exception as e:
+
+        print("ERROR:", e)
+
+        return jsonify({
+            "error": str(e)
+        }), 500
+
+@app.route("/StudentClusters", methods=["GET"])
+def student_clusters():
+
+    try:
+
+        result = calculate_student_clusters()
+
+        print("\n STUDENT CLUSTERS ")
+        print("RECORD COUNT:", len(result))
+
+        if len(result) > 0:
+            print("FIRST RECORD:")
+            print(result[0])
+
+
+        return jsonify(result)
+
+    except Exception as e:
+
+        print("CLUSTER ERROR:", e)
+
+        return jsonify({
+            "error": str(e)
+        }), 500
 
 if __name__ == "__main__":
     app.run(port=3000, debug=False)

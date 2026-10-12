@@ -1,13 +1,14 @@
 from pymongo import MongoClient
 import pandas as pd
 import numpy as np
+import os
+from dotenv import load_dotenv
 
-
-MONGO_URI = "mongodb+srv://Sinathra:H%40nsani2001@cluster1.imb7o.mongodb.net/stock_db?retryWrites=true&w=majority&appName=Cluster1"
+MONGO_URI = os.getenv("MONGO_URI")
 
 client = MongoClient(MONGO_URI)
 
-db = client["stock_db"]
+db = client["research_db"]
 collection = db["students"]
 
 
