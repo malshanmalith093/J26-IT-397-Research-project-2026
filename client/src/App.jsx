@@ -14,7 +14,7 @@ import Resources from './pages/Resources';
 import Profiling from './pages/Profiling';
 import GroupDetails from './pages/GroupDetails';
 import Example from './pages/Example';
-
+import Task from "./components/OptimalPath/Task";
 
 
 /**
@@ -121,7 +121,17 @@ function App() {
                     
                 </Route>
 
-                
+                <Route
+                    path="/task/:taskId"
+                    element={
+                        <ProtectedRoute>
+                            <DashboardLayout title="questions" />
+                        </ProtectedRoute>
+                    }
+                >
+                    <Route index element={<Task />} />
+                    
+                </Route>
 
                 
 
