@@ -164,12 +164,6 @@ const handleSubmit = async () => {
 };
 
 
-    // const handleSubmit = () => {
-
-    //     console.log("Task ID:", taskId);
-    //     console.log("Student Answers:", answers);
-
-    // };
 
 
     if (loading) {
