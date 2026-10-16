@@ -12,6 +12,10 @@ import bcrypt
 import jwt
 import os
 from datetime import datetime, timedelta
+from OptimalPath.Task import get_task_questions
+from OptimalPath.Task import check_quiz_answers
+from OptimalPath.Session import create_new_session, get_student_sessions, save_assessment_session
+
 
 load_dotenv()
 
@@ -271,6 +275,99 @@ def student_clusters():
         return jsonify({
             "error": str(e)
         }), 500
+
+@app.route("/task/<task_id>", methods=["GET"])
+def quiz_questions(task_id):
+    print("\n TASK REQUEST ")
+    print("Task ID received:", task_id)
+
+    questions = get_task_questions(task_id)
+
+    if questions is None:
+        return jsonify({
+            "error": "Failed to retrieve questions"
+        }), 500
+
+    print("Questions returned:", questions)
+
+    return jsonify(questions), 200
+
+@app.route("/submit-quiz", methods=["POST"])
+def submit_quiz():
+    try:
+        data = request.get_json()
+
+        result = check_quiz_answers(
+            student_id=data.get("student_id", "S0001"),
+            session_id=data.get("session_id", "S1"),
+            module_id=data.get("module_id", "3"),
+            task_id=data.get("task_id"),
+            student_answers=data.get("answers", {})
+        )
+
+        status_code = 200 if result.get("success") else 400
+        return jsonify(result), status_code
+
+    except Exception as e:
+        print("Error submitting quiz:", repr(e))
+        return jsonify({
+            "success": False,
+            "error": "Unable to check quiz answers"
+        }), 500
+
+@app.route("/create-session", methods=["POST"]) 
+def create_session():
+    print( "\nDEBUG: NEW CREATE-SESSION ROUTE IS RUNNING", flush=True ) 
+    data = request.get_json(silent=True) or {} 
+    print("\n========== CREATE SESSION REQUEST ==========", flush=True) 
+    print("Received data:", data, flush=True) 
+    print("Student ID:", repr(data.get("student_id")), flush=True) 
+    print("Module ID:", repr(data.get("module_id")), flush=True) 
+    print("Task ID:", repr(data.get("task_id")), flush=True) 
+    print("Task type:", repr(data.get("task_type")), flush=True) 
+    print("Quiz percentage:", repr(data.get("quiz_percentage")), flush=True) 
+    print("Assignment percentage:", repr(data.get("assignment_percentage")), flush=True)
+    result = create_new_session( student_id=data.get("student_id"), module_id=data.get("module_id"), 
+                                    task_id=data.get("task_id"), task_name=data.get("task_name"), 
+                                    task_type=data.get("task_type"), 
+                                    quiz_percentage=data.get("quiz_percentage"), 
+                                    assignment_percentage=data.get("assignment_percentage"), 
+                                    attempts_taken=data.get("attempts_taken", 0) ) 
+    print("SESSION CREATION RESULT:", result, flush=True) 
+    print("============================================\n", flush=True) 
+    if not result.get("success"): 
+        return jsonify(result), 400 
+    return jsonify(result), 201
+
+@app.route("/student-sessions/<student_id>", methods=["GET"])
+def student_sessions(student_id):
+    try:
+        sessions = get_student_sessions(student_id)
+        return jsonify({
+            "success": True,
+            "count": len(sessions),
+            "sessions": sessions
+        })
+    except Exception as error:
+        print("Retrieve sessions error:", repr(error))
+        return jsonify({
+            "success": False,
+            "error": "Unable to retrieve student sessions."
+        }), 500
+
+@app.route("/save-assessment", methods=["POST"]) 
+def save_assessment():
+    data = request.get_json(silent=True) or {} 
+    result = save_assessment_session( 
+        student_id=data.get("student_id"), 
+        module_id=data.get("module_id"), 
+        task_id=data.get("task_id"), 
+        task_type=data.get("task_type"), 
+        percentage=data.get("percentage"), 
+        attempts_taken=data.get("attempts_taken", 1) 
+    ) 
+    return jsonify(result), (
+         201 if result.get("success") else 400 )
 
 if __name__ == "__main__":
     app.run(port=3000, debug=False)

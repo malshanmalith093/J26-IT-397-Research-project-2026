@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Users } from 'lucide-react';
 import S1 from '../components/OptimalPath/Student1';
+import Task from '../components/OptimalPath/Task';
 
 const OptimalPath = () => {
     const [activeTab, setActiveTab] = useState('My Tasks');
@@ -14,10 +15,10 @@ const OptimalPath = () => {
                             <Users size={18} />
                             My Tasks
                         </button>
-                        {/* <button className={`status-pill ${activeTab === 'data' ? 'active enrolled' : ''}`} onClick={() => setActiveTab('data')}>
+                         {/* <button className={`status-pill ${activeTab === 'question' ? 'active enrolled' : ''}`} onClick={() => setActiveTab('question')}>
                             <Search size={18} />
-                            Data records
-                        </button> */}
+                            Question
+                        </button>  */}
                     </div>
             {/* <EmptyState
                 title="Testing the environment..."
@@ -30,9 +31,9 @@ const OptimalPath = () => {
                     <S1 />
                 )}
 
-                {/* {activeTab === 'data' && (
-                    <New />
-                )} */}
+                 {/* {activeTab === 'data' && (
+                    <Task />
+                )}  */}
 
             </div>
 
