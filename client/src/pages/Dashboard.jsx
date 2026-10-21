@@ -1,8 +1,11 @@
 /**
  * Dashboard Page
  * Displays a welcome message and quick overview for the student.
+ * Includes the Component 2 advice alert (personalised warning alerts +
+ * dashboard information, per the C2 proposal) when the student has advice.
  */
 import React from 'react';
+import AdviceAlert from '../components/Profiling/AdviceAlert';
 
 const Dashboard = () => {
     return (
@@ -11,6 +14,8 @@ const Dashboard = () => {
                 <h2>Welcome back to EduPulse!</h2>
                 <p>Select a module from the sidebar to get started.</p>
             </div>
+
+            <AdviceAlert />
 
             <style jsx>{`
                 .welcome-card {
