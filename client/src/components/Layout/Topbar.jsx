@@ -32,7 +32,7 @@ const Topbar = ({ pageTitle, onMenuClick }) => {
             // try {
             //     // Try Node.js first
             //     res = await axios.get(
-            //         `${import.meta.env.VITE_AUTH_BACKEND}/api/auth/me`,
+            //         `${import.meta.env.VITE_AUTH_BACKEND || import.meta.env.VITE_NODE_BACKEND}/api/auth/me`,
             //         {
             //             headers: { 'x-auth-token': token },
             //             timeout: 3000
@@ -66,7 +66,7 @@ const Topbar = ({ pageTitle, onMenuClick }) => {
             try {
     // Try Node.js first
     res = await axios.get(
-        `${import.meta.env.VITE_AUTH_BACKEND}/api/auth/me`,
+        `${import.meta.env.VITE_AUTH_BACKEND || import.meta.env.VITE_NODE_BACKEND}/api/auth/me`,
         {
             headers: { 'x-auth-token': token },
             timeout: 3000

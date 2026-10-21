@@ -1,4 +1,4 @@
-from pymongo import MongoClient
+from db import mongo_client
 import pandas as pd
 import numpy as np
 import os
@@ -8,7 +8,7 @@ load_dotenv()
 
 MONGO_URI = os.getenv("MONGO_URI")
 
-client = MongoClient(MONGO_URI)
+client = mongo_client(MONGO_URI)
 
 db = client["research_db"]
 collection = db["users"]
