@@ -1,0 +1,38 @@
+# Environment files and local secrets
+**/.env*
+**/*.env
+
+# JavaScript dependencies and generated frontend output
+**/node_modules/
+**/dist/
+**/build/
+**/coverage/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Python virtual environments, bytecode, and test/tool caches
+**/.venv/
+**/venv/
+**/__pycache__/
+*.py[cod]
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+
+# Generated trained-model artifacts
+**/ModelOutput/
+*.joblib
+*.pkl
+*.pickle
+
+# Local student risk input database
+**/manual_risk_entries.sqlite3*
+
+# Local backups, logs, and operating-system files
+*.bak
+*.log
+.DS_Store
+Thumbs.db
+Desktop.ini

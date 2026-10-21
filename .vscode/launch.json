@@ -1,0 +1,16 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "EduPulse: Python Risk Assessment API",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "app",
+      "cwd": "${workspaceFolder}/python",
+      "python": "${workspaceFolder}/python/.venv/Scripts/python.exe",
+      "envFile": "${workspaceFolder}/python/.env",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    }
+  ]
+}
