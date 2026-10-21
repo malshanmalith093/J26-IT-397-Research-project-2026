@@ -1,0 +1,12 @@
+Flask
+Flask-Cors
+pandas
+scikit-learn
+lightgbm
+joblib
+matplotlib
+pymongo
+python-dotenv
+bcrypt
+PyJWT
+ipykernel
