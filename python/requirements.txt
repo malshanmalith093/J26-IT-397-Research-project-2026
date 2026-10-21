@@ -1,0 +1,17 @@
+# Flask service core (app.py, auth)
+flask
+flask-cors
+pymongo
+certifi          # CA certificates for MongoDB Atlas (fixes SSL errors on macOS)
+python-dotenv
+bcrypt
+pyjwt
+
+# Component 2 - advice engine (OpenAI, Azure AI Foundry, Azure OpenAI, custom endpoints)
+openai>=2.0
+# Optional: only for AZURE_FOUNDRY_AUTH=entra (keyless login)
+# azure-identity
+
+# Needed only by the Example demo (Example/graph.py, Example/new.py), which app.py imports at startup
+pandas
+matplotlib

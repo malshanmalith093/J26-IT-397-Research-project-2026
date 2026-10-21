@@ -2,9 +2,8 @@ from flask import Flask, request, send_file, jsonify
 from flask_cors import CORS
 from Example.graph import create_graph
 from Example.new import get_data
-from OptimalPath.Data import get_student_data
-from OptimalPath.category import calculate_student_clusters
-from pymongo import MongoClient
+
+from db import mongo_client
 from bson import ObjectId
 
 from dotenv import load_dotenv
@@ -27,10 +26,18 @@ if not MONGO_URI:
 if not JWT_SECRET:
     raise RuntimeError("JWT_SECRET is not configured")
 
-client = MongoClient(MONGO_URI)
+client = mongo_client(MONGO_URI)  # uses certifi CA bundle (fixes Atlas SSL errors on macOS)
 
 db = client["research_db"]
 collection = db["users"]
+
+# Component 2 - personalised advice engine (uses Component 1 risk output + OpenAI)
+from Profiling.routes import advice_bp, init_advice
+from Profiling.courses import courses_bp, init_courses
+init_advice(db)
+init_courses(db)          # inserts the 3 sample courses the first time
+app.register_blueprint(advice_bp)
+app.register_blueprint(courses_bp)
 
 @app.route("/", methods=["GET"])
 def home():
@@ -104,8 +111,11 @@ def get_current_user():
             algorithms=["HS256"]
         )
 
+        # Flask tokens use "user_id"; Node tokens use {"user": {"id": ...}}
+        user_id = decoded.get("user_id") or (decoded.get("user") or {}).get("id")
+
         user = collection.find_one({
-            "_id": ObjectId(decoded["user_id"])
+            "_id": ObjectId(user_id)
         })
 
         if not user:
@@ -221,56 +231,7 @@ def example_data():
             "message": str(e)
         }), 500
 
-@app.route("/StudentData", methods=["GET"])
-def student_data():
 
-    try:
-
-        result = get_student_data()
-
-        print("\n FLASK STUDENT DATA ")
-        print("TYPE:", type(result))
-        print("RECORD COUNT:", len(result))
-
-        if len(result) > 0:
-            print("FIRST RECORD:")
-            print(result[0])
-
-
-        return jsonify(result)
-
-    except Exception as e:
-
-        print("ERROR:", e)
-
-        return jsonify({
-            "error": str(e)
-        }), 500
-
-@app.route("/StudentClusters", methods=["GET"])
-def student_clusters():
-
-    try:
-
-        result = calculate_student_clusters()
-
-        print("\n STUDENT CLUSTERS ")
-        print("RECORD COUNT:", len(result))
-
-        if len(result) > 0:
-            print("FIRST RECORD:")
-            print(result[0])
-
-
-        return jsonify(result)
-
-    except Exception as e:
-
-        print("CLUSTER ERROR:", e)
-
-        return jsonify({
-            "error": str(e)
-        }), 500
 
 if __name__ == "__main__":
     app.run(port=3000, debug=False)
