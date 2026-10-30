@@ -18,10 +18,6 @@ each academic module.
 5. Educational resource recommendation – Academic resource recommendation based on learner 
 profile
 
-<h2>High Level System Architecture  </h2>
-
-<img width="972" height="1037" alt="image" src="https://github.com/user-attachments/assets/45062339-bb26-41a7-af1f-d5a0d65af193" />
-
 <h2>Dependencies    </h2>
 
 React.js – for the frontend with following necessary dependencies :
@@ -37,6 +33,10 @@ Python – for the backend with following necessary dependencies
  
  Other libraries for model training and backend tasks – pandas, numpy, sklearn, matplotlib  
 
+<h2>Project overview </h2>
+
+Please go through the overview folder for identify objectives of the project.
+ 
 
 
 
