@@ -20,7 +20,7 @@ profile
 
 <h2>High Level System Architecture  </h2>
 
-<img width="972" height="1037" alt="image" src="https://github.com/user-attachments/assets/45062339-bb26-41a7-af1f-d5a0d65af193" />
+<img width="700" alt="High Level System Architecture" src="architecture.png" />
 
 <h2>Dependencies    </h2>
 
