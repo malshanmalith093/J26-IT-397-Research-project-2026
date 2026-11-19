@@ -6,6 +6,7 @@ import { Plus, Users, Calendar, Lock, Unlock, ChevronRight, ChevronLeft, Calenda
 //import '../css/print.css';
 //import Nav from './Nav';
 //const URL = "http://localhost:8080/stock";
+import MasteryPrediction from "./MasteryPrediction";
 
 function S1() {
     const [studentClusters, setStudentClusters] = useState([]);
@@ -17,6 +18,7 @@ function S1() {
     const [filteredStudent, setFilteredStudent] = useState([]);
     const [searchQuery, setSearchQuery] = useState("");
     const [noResults, setNoResults] = useState(false);
+    const [weaknessChanges, setWeaknessChanges] = useState({});
 
     
 const fetchStudentClusters = async () => {
@@ -96,11 +98,62 @@ const fetchStudentData = async () => {
     }
 };
 
+const fetchWeaknessChanges = async () => {
+    try {
+        const response = await axios.get(
+            "http://localhost:3000/student-sessions/S0001"
+        );
+
+        const sessions = response.data.sessions || [];
+        const latestByModule = {};
+
+        sessions.forEach((session) => {
+            const taskType = String(session.task_type || "")
+                .trim()
+                .toLowerCase();
+                
+            if (
+                !["quiz", "assignment"].includes(taskType) ||
+                //session.task_type !== "quiz" ||
+                session.weakness_before == null ||
+                session.weakness_after == null
+            ) {
+                return;
+            }
+
+            const moduleId = String(session.module_id);
+            const existing = latestByModule[moduleId];
+
+            const currentTime = new Date(
+                session.timestamp || 0
+            ).getTime();
+
+            const existingTime = existing
+                ? new Date(existing.timestamp || 0).getTime()
+                : -Infinity;
+
+            if (!existing || currentTime >= existingTime) {
+                latestByModule[moduleId] = session;
+            }
+        });
+
+        setWeaknessChanges(latestByModule);
+        console.log("Latest weakness changes:", latestByModule);
+
+    } catch (error) {
+        console.error(
+            "Failed to fetch weakness changes:",
+            error.response?.data || error.message
+        );
+    }
+};
+
 useEffect(() => {
     console.log("S1 page loaded");
 
     fetchStudentData();
     fetchStudentClusters();
+    fetchWeaknessChanges();
 }, []);
     // useEffect(() => {
     //     fetchStudentData();
@@ -154,19 +207,19 @@ newstudent.forEach((student) => {
   gridTemplateColumns: "repeat(5, 1fr)",
   //gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
   //gridTemplateColumns: "1fr 1fr", // 2 columns
-  gap: "20px",
-  width: "90%",
+  gap: "10px",
+  width: "100%",
    margin:"30px",
    fontSize:"12px"
 
 };
 const gridContainer1 = {
   display: "grid",
-  gridTemplateColumns: "repeat(2, 1fr)",
+  gridTemplateColumns: "repeat(1, 1fr)",
   //gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
   //gridTemplateColumns: "1fr 1fr", // 2 columns
   gap: "20px",
-  width: "90%",
+  width: "70%",
    margin:"30px"
 
 };
@@ -528,70 +581,12 @@ const highestPriorityModule = priorityData
 
         <div style={containerStyle}>
 
-            <div
-    style={{
-        width: "90%",
-        maxWidth: "1200px",
-        backgroundColor: "white",
-        padding: "20px",
-        borderRadius: "12px",
-        margin: "20px 0",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.08)"
-    }}
->
-    <h2><b>Your Learning Profile</b></h2>
+            
 
-     {currentClusterFeedback ? (
-        <>
-            <h3>
-                {currentClusterFeedback.title}
-            </h3>
-
-            <p
-                style={{
-                    fontSize: "16px",
-                    lineHeight: "1.6",
-                    color: "#555"
-                }}
-            >
-                {currentClusterFeedback.description}
-            </p>
-
-            <div
-                style={{
-                    marginTop: "15px",
-                    padding: "15px",
-                    backgroundColor: "#f3f4f6",
-                    borderRadius: "10px"
-                }}
-            >
-                {/* <strong>Personalized suggestion</strong>
-
-                <p
-                    style={{
-                        marginBottom: 0,
-                        marginTop: "8px",
-                        lineHeight: "1.6",
-                        color: "#555"
-                    }}
-                >
-                    {currentClusterFeedback.suggestion}
-                </p> */}
-            </div>
-        </>
-    ) : (
-        <p>Learning profile is being calculated...</p>
-    )}
-
-    {/* <p>
-        Student Cluster:{" "}
-        {currentStudentCluster
-            ? `Cluster ${Number(currentStudentCluster.cluster) + 1}`
-            : "Not found"}
-    </p> */}
-
-    
-</div>
+{/* <MasteryPrediction
+    studentId="S0001"
+    moduleId="1"
+/> */}
 
             {highestPriorityModule && (
     <h1>
@@ -605,57 +600,144 @@ const highestPriorityModule = priorityData
             {priorityData
                 .filter((student) => student.student_id === "S0001")
                 .sort((a, b) => a.priority_rank - b.priority_rank)
-                .map((Item) => (
-                    <div key={`${Item.student_id}-${Item.module_id}`} style={{
-            backgroundColor: "white",
-            padding: "20px",
-            margin: "10px",
-            borderRadius: "10px",
-             border:Item.priority_rank === 1
-        ? "2px solid #c5401e"
-        : Item.priority_rank === 2
-        ? "2px solid #ff9800"
-        : Item.priority_rank === 3
-        ? "2px solid #50af9b"
-        : Item.priority_rank === 4
-        ? "2px solid #1bcc24"
-        : Item.priority_rank === 5
-        ? "2px solid #73c581"
-        : "1px solid #e5e7eb",
-        }}>
-{/* 
-                        <h2>
-                            Student ID: {Item.student_id}
-                        </h2> */}
+                .map((Item) => {
+        //             <div key={`${Item.student_id}-${Item.module_id}`} style={{
+                        
+        //     backgroundColor: "white",
+        //     padding: "20px",
+        //     margin: "10px",
+        //     borderRadius: "10px",
+        //      border:Item.priority_rank === 1
+        // ? "2px solid #c5401e"
+        // : Item.priority_rank === 2
+        // ? "2px solid #ff9800"
+        // : Item.priority_rank === 3
+        // ? "2px solid #50af9b"
+        // : Item.priority_rank === 4
+        // ? "2px solid #1bcc24"
+        // : Item.priority_rank === 5
+        // ? "2px solid #73c581"
+        // : "1px solid #e5e7eb",
+        // }}>
 
-                        <h2>
-                            Module : {moduleNames[Item.module_id] || `Module ${Item.module_id}`}
-                        </h2>
 
-                        {/* <h3>
-                            Quiz Score: {Item.quiz_score}
-                        </h3>
+        //                 <h2>
+        //                     Module : {moduleNames[Item.module_id] || `Module ${Item.module_id}`}
+        //                 </h2>
+
+        //                 <h2>
+                            
+        //                      Weakness Score: {
+        //                         Number(Item.weakness_score).toFixed(3)
+        //                         }
+        //                 </h2>
+
+        //                 <h2>
+        //                     Priority Rank: {Item.priority_rank}
+        //                 </h2>
+
+        //                 <hr />
+
+        //             </div>
+                    const change = weaknessChanges[String(Item.module_id)];
+
+        return (
+            <div
+                key={`${Item.student_id}-${Item.module_id}`}
+                style={{
+                    backgroundColor: "white",
+                    padding: "20px",
+                    margin: "10px",
+                    borderRadius: "10px",
+                    border:
+                        Item.priority_rank === 1
+                            ? "2px solid #c5401e"
+                            : Item.priority_rank === 2
+                            ? "2px solid #ff9800"
+                            : Item.priority_rank === 3
+                            ? "2px solid #50af9b"
+                            : Item.priority_rank === 4
+                            ? "2px solid #1bcc24"
+                            : "2px solid #73c581"
+                }}
+            >
+                <h2>
+                    Module:{" "}
+                    {moduleNames[Item.module_id] ||
+                        `Module ${Item.module_id}`}
+                </h2>
+
+                <h2>
+                    Weakness Score:{" "}
+                    {Number(Item.weakness_score).toFixed(3)}
+                </h2>
+
+                <h2>Priority Rank: {Item.priority_rank}</h2>
+
+                
+
+                {change && (
+                    <div
+                        style={{
+                            marginTop: "12px",
+                            padding: "12px",
+                            borderRadius: "8px",
+                            backgroundColor: "#f3f4f6",
+                            fontSize: "13px"
+                        }}
+                    >
+                        {/*<h3>Latest Quiz Weakness Change</h3>*/}
 
                         <h3>
-                            Assignment Score: {Item.assignment_score}
+                            {/*Before:{" "}*/}
+                            {Number(change.weakness_before).toFixed(3)}% <t></t>  to  <t></t>
+                             {Number(change.weakness_after).toFixed(3)}%
+                             
                         </h3>
+                        
 
-                        <h3>
-                            Attention Score: {Item.attention_score}
-                        </h3> */}
+                        {/*<p>
+                            After:{" "}
+                            
+                        </p>*/}
 
-                        <h2>
-                            Weakness Score: {Item.weakness_score}
-                        </h2>
-
-                        <h2>
-                            Priority Rank: {Item.priority_rank}
-                        </h2>
-
-                        <hr />
-
+                        {Number(change.weakness_change) > 0 ? (
+                            <p style={{ color: "#15803d" }}>
+                                Weakness decreased by{" "}
+                                {change.weakness_reduction_percent != null
+                                    ? `${Number(
+                                          change.weakness_reduction_percent
+                                      ).toFixed(3)}%`
+                                    : "an uncalculated percentage"}
+                            </p>
+                        ) : Number(change.weakness_change) < 0 ? (
+                            <p style={{ color: "#b91c1c" }}>
+                                Weakness increased by{" "}
+                                {change.weakness_reduction_percent != null
+                                    ? `${Math.abs(
+                                          Number(
+                                              change.weakness_reduction_percent
+                                          )
+                                      ).toFixed(3)}%`
+                                    : "an uncalculated percentage"}
+                            </p>
+                        ) : (
+                            <p>No change in weakness.</p>
+                        )}
                     </div>
-                ))}
+                )}
+
+                <hr />
+                <br></br>
+
+                <MasteryPrediction
+    studentId="S0001"
+    moduleId={String(Item.module_id)}
+/>
+            </div>
+        );
+
+})}
                 </div>
                 <h1>Today's Tasks</h1>
                 <div style={gridContainer1}>
@@ -755,7 +837,12 @@ const highestPriorityModule = priorityData
         return;
     }
 
-    navigate(`/task/${item.task_id}`);
+    navigate(`/task/${item.task_id}`, {
+        state: {
+            isAssignment: item.is_assignment === true,
+        }
+    });
+    //navigate(`/task/${item.task_id}`);
 }}
                      style={{
         position: "absolute",

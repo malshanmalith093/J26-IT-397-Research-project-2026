@@ -2,6 +2,7 @@ from pymongo import MongoClient
 import pandas as pd
 import numpy as np
 import os
+from OptimalPath.Percentage import get_module_weakness
 from dotenv import load_dotenv
 
 MONGO_URI = os.getenv("MONGO_URI")
@@ -9,7 +10,7 @@ MONGO_URI = os.getenv("MONGO_URI")
 client = MongoClient(MONGO_URI)
 
 db = client["research_db"]
-collection = db["students"]
+collection = db["path_students"]
 
 
 def get_student_data():
@@ -69,10 +70,17 @@ def get_student_data():
     100 - module_state['attention_score']
 )
 
-    module_state['weakness_score'] = (
-    0.5 * module_state['quiz_weakness'] +
-    0.3 * module_state['assignment_weakness'] +
-    0.2 * module_state['attention_weakness']
+#     module_state['weakness_score'] = (
+#     0.5 * module_state['quiz_weakness'] +
+#     0.3 * module_state['assignment_weakness'] +
+#     0.2 * module_state['attention_weakness']
+# )
+    module_state["weakness_score"] = module_state.apply(
+    lambda row: get_module_weakness(
+        student_id=row["student_id"],
+        module_id=row["module_id"],
+    ),
+    axis=1,
 )
 
     module_state['priority_rank'] = (
