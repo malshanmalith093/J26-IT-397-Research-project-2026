@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Users } from 'lucide-react';
 import S1 from '../components/OptimalPath/Student1';
 import Task from '../components/OptimalPath/Task';
+import MasteryPrediction from "../components/OptimalPath/MasteryPrediction";
 
 const OptimalPath = () => {
     const [activeTab, setActiveTab] = useState('My Tasks');

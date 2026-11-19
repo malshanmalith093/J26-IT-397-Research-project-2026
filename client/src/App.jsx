@@ -17,6 +17,7 @@ import Example from './pages/Example';
 import Task from "./components/OptimalPath/Task";
 
 
+
 /**
  * ProtectedRoute Component
  * Redirects unauthenticated users to the login page.
@@ -132,6 +133,8 @@ function App() {
                     <Route index element={<Task />} />
                     
                 </Route>
+
+                
 
                 
 

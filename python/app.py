@@ -11,11 +11,16 @@ from dotenv import load_dotenv
 import bcrypt
 import jwt
 import os
+import inspect
 from datetime import datetime, timedelta
 from OptimalPath.Task import get_task_questions
 from OptimalPath.Task import check_quiz_answers
 from OptimalPath.Session import create_new_session, get_student_sessions, save_assessment_session
-
+from OptimalPath.Percentage import get_module_weakness
+from OptimalPath.Model_prediction1 import (
+    derive_model_inputs,
+    predict_mastery
+)
 
 load_dotenv()
 
@@ -35,6 +40,13 @@ client = MongoClient(MONGO_URI)
 
 db = client["research_db"]
 collection = db["users"]
+
+
+print(
+    "PERCENTAGE.PY LOADED FROM:",
+    inspect.getsourcefile(get_module_weakness),
+    flush=True
+)
 
 @app.route("/", methods=["GET"])
 def home():
@@ -92,14 +104,52 @@ def login():
     }), 200
 
 @app.route("/api/auth/me", methods=["GET"])
-def get_current_user():
+# def get_current_user():
 
+#     token = request.headers.get("x-auth-token")
+
+#     if not token:
+#         return jsonify({
+#             "message": "No token provided"
+#         }), 401
+
+#     try:
+#         decoded = jwt.decode(
+#             token,
+#             JWT_SECRET,
+#             algorithms=["HS256"]
+#         )
+
+#         user = collection.find_one({
+#             "_id": ObjectId(decoded["user_id"])
+#         })
+
+#         if not user:
+#             return jsonify({
+#                 "message": "User not found"
+#             }), 404
+
+#         return jsonify({
+#             "id": str(user["_id"]),
+#             "name": user.get("name"),
+#             "email": user.get("email"),
+#             "role": user.get("role")
+#         }), 200
+
+#     except jwt.ExpiredSignatureError:
+#         return jsonify({
+#             "message": "Token expired"
+#         }), 401
+
+#     except jwt.InvalidTokenError:
+#         return jsonify({
+#             "message": "Invalid token"
+#         }), 401
+def get_current_user():
     token = request.headers.get("x-auth-token")
 
     if not token:
-        return jsonify({
-            "message": "No token provided"
-        }), 401
+        return jsonify({"message": "No token provided"}), 401
 
     try:
         decoded = jwt.decode(
@@ -108,14 +158,24 @@ def get_current_user():
             algorithms=["HS256"]
         )
 
-        user = collection.find_one({
-            "_id": ObjectId(decoded["user_id"])
-        })
+        user_id = decoded.get("user_id")
+
+        if not user_id:
+            return jsonify({
+                "message": "Token is missing the user_id claim. Please log in again."
+            }), 401
+
+        try:
+            object_id = ObjectId(user_id)
+        except Exception:
+            return jsonify({
+                "message": "Invalid user ID in token. Please log in again."
+            }), 401
+
+        user = collection.find_one({"_id": object_id})
 
         if not user:
-            return jsonify({
-                "message": "User not found"
-            }), 404
+            return jsonify({"message": "User not found"}), 404
 
         return jsonify({
             "id": str(user["_id"]),
@@ -125,14 +185,11 @@ def get_current_user():
         }), 200
 
     except jwt.ExpiredSignatureError:
-        return jsonify({
-            "message": "Token expired"
-        }), 401
+        return jsonify({"message": "Token expired. Please log in again."}), 401
 
     except jwt.InvalidTokenError:
-        return jsonify({
-            "message": "Invalid token"
-        }), 401
+        return jsonify({"message": "Invalid token. Please log in again."}), 401
+
 
 @app.route("/api/auth/register", methods=["POST", "OPTIONS"])
 def register():
@@ -368,6 +425,59 @@ def save_assessment():
     ) 
     return jsonify(result), (
          201 if result.get("success") else 400 )
+
+@app.route(
+    "/students/<student_id>/mastery-prediction/<module_id>",
+    methods=["GET"]
+)
+def mastery_prediction(student_id, module_id):
+
+    try:
+        # Retrieve sessions using your existing Session.py function
+        all_sessions = get_student_sessions(student_id)
+
+        # Filter completed sessions for the requested module
+        module_sessions = [
+            session for session in all_sessions
+            if str(session.get("module_id")) == str(module_id)
+            and session.get("task_status") == "completed"
+        ]
+
+        if not module_sessions:
+            return jsonify({
+                "success": False,
+                "error": "No completed sessions found for this module."
+            }), 404
+
+        # Derive model inputs
+        features = derive_model_inputs(module_sessions)
+
+        # Classification prediction
+        result = predict_mastery(features)
+
+        return jsonify({
+            "success": True,
+            "student_id": student_id,
+            "module_id": str(module_id),
+            "prediction": result
+        }), 200
+
+    except ValueError as error:
+
+        return jsonify({
+            "success": False,
+            "error": str(error)
+        }), 400
+
+    except Exception:
+
+        app.logger.exception("Mastery prediction failed")
+
+        return jsonify({
+            "success": False,
+            "error": "Unable to generate mastery prediction."
+        }), 500
+
 
 if __name__ == "__main__":
     app.run(port=3000, debug=False)

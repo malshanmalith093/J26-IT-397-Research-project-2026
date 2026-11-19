@@ -1,18 +1,23 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate , useLocation } from "react-router-dom";
 import axios from "axios";
 
 function Task() {
 
     const { taskId } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
 
+    const isAssignment = location.state?.isAssignment === true;
+    const taskType = isAssignment ? "assignment" : "quiz";
+    
     const [questions, setQuestions] = useState([]);
     const [result, setResult] = useState(null);
 const [submitting, setSubmitting] = useState(false);
     const [answers, setAnswers] = useState({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [weaknessChange, setWeaknessChange] = useState(null);
 
     useEffect(() => {
 
@@ -78,7 +83,7 @@ const handleSubmit = async () => {
         setSubmitting(true);
         setError("");
 
-        const moduleId = taskId.split("_")[0].replace("M", "");
+        const moduleId = taskId.split("_")[ 0].replace("M", "");
         
         const quizPayload = {
             student_id: "S0001",
@@ -125,9 +130,15 @@ const handleSubmit = async () => {
             module_id: String(moduleId),
             task_id: taskId,
             task_name: taskId,
-            task_type: "quiz",
+            task_type: taskType,
             quiz_percentage: Number(quizPercentage),
-            attempts_taken: 1
+            attempts_taken: 1,
+            ...(taskType === "assignment"
+        ? { assignment_percentage: quizPercentage }
+        : { quiz_percentage: quizPercentage })
+            // ...(isAssignment
+            //     ? { assignment_percentage: Number(quizPercentage) }
+            //     : { quiz_percentage: Number(quizPercentage) })
         };
 
         console.log("QUIZ SESSION PAYLOAD:", sessionPayload);
@@ -146,6 +157,14 @@ const handleSubmit = async () => {
             );
             return;
         }
+
+        setWeaknessChange({
+    before: sessionResponse.data.weakness_before,
+    after: sessionResponse.data.weakness_after,
+    change: sessionResponse.data.weakness_change,
+    reductionPercent:
+        sessionResponse.data.weakness_reduction_percent
+});
 
         setResult(quizResult);
 
@@ -261,72 +280,80 @@ const handleSubmit = async () => {
 
                 
                 <div style={gridContainer1}>
-               {questions.length === 0 ? (
+               
+{questions.length === 0 ? (
   <p>No questions found for this task.</p>
 ) : (
-  questions.map((question, index) => (
-    <div key={question.question_id || index}>
-      <h3>Question {index + 1}:</h3>
+  questions.map((question, index) => {
+    // Prefer the database question ID, with a fallback
+    // for questions whose IDs are missing.
+    const questionId = String(
+      question.question_id ?? question._id ?? `${taskId}_${index}`
+    );
 
-      <p style={{textAlign:"left"}}>
-        {question.question || "Question text is missing from the API response."}
-      </p>
+    return (
+      <div key={questionId}>
+        <h3>Question {index + 1}:</h3>
 
-      <br></br>
+        <p style={{ textAlign: "left" }}>
+          {question.question ||
+            "Question text is missing from the API response."}
+        </p>
 
-      {question.type === "text" || !question.options?.length ? (
-        <input
-          type="text"
-          style={{
-display: "block",
-marginBottom: "12px",
-padding: "10px 12px",
-cursor: "pointer",
-border: "1px solid #ddd",
-borderRadius: "6px",
-textAlign:"left",
-width:"100%"
-}}
-          placeholder="Enter your answer"
-          value={answers[question.question_id] || ""}
-          onChange={(e) =>
-            handleAnswerChange(question.question_id, e.target.value)
-          }
-        />
-      ) : (
-        question.options.map((option, optionIndex) => (
-          <label key={optionIndex}
-           style={{
-display: "block",
-marginBottom: "12px",
-padding: "10px 12px",
-cursor: "pointer",
-border: "1px solid #ddd",
-borderRadius: "6px",
-textAlign:"left",
-backgroundColor:
-answers[question.question_id] === option
-? "#e6f2ff"
-: "#ffffff"
-}}>
-           
-            <input
-              type="radio"
-              name={question.question_id}
-              value={option}
-              checked={answers[question.question_id] === option}
-              onChange={() =>
-                handleAnswerChange(question.question_id, option)
-              }
-              
-            />
-            {option}
-          </label>
-        
-        ))
-      )}
-    </div>
-  ))
+        <br />
+
+        {question.type === "text" || !question.options?.length ? (
+          <input
+            type="text"
+            style={{
+              display: "block",
+              marginBottom: "12px",
+              padding: "10px 12px",
+              border: "1px solid #ddd",
+              borderRadius: "6px",
+              width: "100%",
+              boxSizing: "border-box"
+            }}
+            placeholder="Enter your answer"
+            value={answers[questionId] ?? ""}
+            onChange={(e) =>
+              handleAnswerChange(questionId, e.target.value)
+            }
+          />
+        ) : (
+          question.options.map((option, optionIndex) => (
+            <label
+              key={`${questionId}_${optionIndex}`}
+              style={{
+                display: "block",
+                marginBottom: "12px",
+                padding: "10px 12px",
+                cursor: "pointer",
+                border: "1px solid #ddd",
+                borderRadius: "6px",
+                textAlign: "left",
+                backgroundColor:
+                  answers[questionId] === option
+                    ? "#e6f2ff"
+                    : "#ffffff"
+              }}
+            >
+              <input
+                type="radio"
+                name={`question_${questionId}`}
+                value={option}
+                checked={answers[questionId] === option}
+                onChange={() =>
+                  handleAnswerChange(questionId, option)
+                }
+              />
+              {" "}{option}
+            </label>
+          ))
+        )}
+      </div>
+    );
+  })
 )}
 
 </div>
@@ -360,6 +387,95 @@ answers[question.question_id] === option
 )}
 
 <br></br>
+
+
+
+
+{result && Array.isArray(result.answers) && (
+    <>
+        <h3>Quiz performance</h3>
+
+        <h3>
+            {result.answers.filter(
+                answer => answer.is_correct
+            ).length}/{result.answers.length} correct
+            {" · "}
+            {result.percentage}%
+        </h3>
+    </>
+)}
+
+{result && (
+    weaknessChange?.before != null &&
+    weaknessChange?.after != null &&
+    weaknessChange?.change != null ? (
+    <div style={{
+        marginTop: "18px",
+        padding: "18px",
+        backgroundColor: "#f8fafc",
+        border: "1px solid #dbe3ec",
+        borderRadius: "10px"
+    }}>
+        <h3>Module Weakness Change</h3>
+
+        <p>
+            Before:{" "}
+            {Number(weaknessChange.before).toFixed(3)}
+        </p>
+
+        <p>
+            After:{" "}
+            {Number(weaknessChange.after).toFixed(3)}
+        </p>
+
+        <h3 style={{
+            color: weaknessChange.change > 0
+                ? "#16804a"
+                : weaknessChange.change < 0
+                ? "#c92323"
+                : "#555"
+        }}>
+            {weaknessChange.change > 0
+                ? `↓ ${Math.abs(
+                    weaknessChange.change
+                  ).toFixed(3)} weakness points`
+                : weaknessChange.change < 0
+                ? `↑ ${Math.abs(
+                    weaknessChange.change
+                  ).toFixed(3)} weakness points`
+                : "No change in weakness"}
+        </h3>
+
+        {weaknessChange.reductionPercent != null && (
+            <p>
+                {weaknessChange.change > 0
+                    ? "Weakness reduction: "
+                    : weaknessChange.change < 0
+                    ? "Weakness increase: "
+                    : "Weakness change: "}
+                {Math.abs(
+                    weaknessChange.reductionPercent
+                ).toFixed(3)}%
+            </p>
+        )}
+    </div>
+) : (
+        <p>
+            Weakness change is unavailable. Complete the
+            required module assessment data to calculate it.
+        </p>
+    )
+)}
+
+
+
+
+
+
+
+
+
+
 {result && (
   <div className="quiz-result">
     <hr />

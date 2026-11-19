@@ -2,6 +2,7 @@ from pymongo import MongoClient
 from datetime import datetime
 import os
 from dotenv import load_dotenv
+from bson import ObjectId
 
 MONGO_URI = os.getenv("MONGO_URI")
 
@@ -9,18 +10,43 @@ client = MongoClient(MONGO_URI)
 
 db = client["research_db"]
 
-questions_collection = db["tasks"]
+questions_collection = db["path_tasks"]
 #quiz_attempts_collection = db["quiz_attempts"]
-students_collection = db["students"]
+students_collection = db["path_students"]
 
 
-def get_task_questions(task_id):
+def get_task_questions(task_id,limit=10):
     try:
+        pipeline = [
+            {"$match": {"task_id": task_id}},
+            {"$sample": {"size": limit}},
+            {
+                "$project": {
+                    "_id": 1,
+                    "QId": 1,
+                    "question_id": 1,
+                    "Question": 1,
+                    "question": 1,
+                    "Options": 1,
+                    "options": 1,
+                    "Type": 1,
+                    "type": 1,
+                    "Marks": 1,
+                    "marks": 1
+                }
+            }
+        ]
+
         documents = list(
-            questions_collection.find({"task_id": task_id})
+            questions_collection.aggregate(pipeline)
         )
 
         questions = []
+        # documents = list(
+        #     questions_collection.find({"task_id": task_id})
+        # )
+
+        # questions = []
 
         for doc in documents:
             print("MongoDB document:", doc)
@@ -28,7 +54,8 @@ def get_task_questions(task_id):
             question_text = doc.get("Question") or doc.get("question") or ""
 
             questions.append({
-                "question_id": doc.get("QId") or doc.get("question_id"),
+                "question_id": str(doc["_id"]),
+                "qid": doc.get("QId") or doc.get("question_id"),
                 "question": question_text,
                 "options": doc.get("Options") or doc.get("options") or [],
                 "type": str(doc.get("Type") or doc.get("type") or "text").lower(),
@@ -60,7 +87,7 @@ def check_quiz_answers(student_id, session_id, module_id, task_id, student_answe
         answer_results = []
 
         for question in questions:
-            question_id = question.get("QId") or question.get("question_id")
+            question_id = str(question["_id"])
             correct_answer = (
                 question.get("CorrectAnswer")
                 or question.get("correct_answer")

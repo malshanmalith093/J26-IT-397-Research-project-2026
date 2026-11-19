@@ -11,8 +11,8 @@ MONGO_URI = os.getenv("MONGO_URI")
 
 client = MongoClient(MONGO_URI)
 
-db = client["stock_db"]
-collection = db["students"]
+db = client["research_db"]
+collection = db["path_students"]
 
 features = [
     'learning_trend',
